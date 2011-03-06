@@ -1,0 +1,3 @@
+# Battle Tactics Server Configuration Notecard
+# Lines that are blank or that begin with a pound (#) sign are ignored by the script
+
