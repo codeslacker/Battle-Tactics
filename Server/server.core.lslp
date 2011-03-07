@@ -48,7 +48,27 @@ integer g_CHANNEL_GLOBAL = -9454200;		// global server messages (such as "kill" 
 
 
 // VARIABLES
-// configuration settings
+
+// <configuration section>
+// payout options
+integer g_configPayout 		= FALSE;				// pay out to winners
+integer g_configPayoutAll 	= TRUE;					// pay out to ALL winners (if the pot can't be divided evenly)
+integer g_configInitialPot 	= 0;					// initial pot to start each game with
+
+// refinery options
+integer g_configRefNum 		= 2;					// number of refineries per team
+integer g_configRefAmount	= 4;					// amount of money to give each person per refinery on an interval
+float g_configRefInterval	= 1.0;					// interval to give money
+
+// time options (represented in minutes)
+float g_configTimeOutJoin	= 4.0;					// join time out
+// </configuration section>
+
+
+
+// pot variables
+integer g_pot = 0;				// amount of money in the pot
+integer g_potDivided = 0;		// amount of money to pay each individual
 
 
 // these two lists are parallel
@@ -69,7 +89,7 @@ list g_blueNames = [];
 // Setup()	- Sets up the server
 Setup()
 {
-	llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "0");		// hide the price
+	llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "hide");		// hide the price
 	llMessageLinked(LINK_THIS, g_LMNUM_JOIN, "join", "no");			// tell the join scripts that joining is not allowed
 	llMessageLinked(LINK_THIS, g_LMNUM_CONFIG, "request", "");		// request configuration data
 }
@@ -101,7 +121,16 @@ default
 		if (num == g_LMNUM_CONFIG && msg == "core")
 		{
 			
-		}
+				
+		}	// end of config message
+		
+		
+		// join message
+		else if (num == g_LMNUM_JOIN)
+		{
+			
+		}	// end of join message
+		
 		
 	}
 	

@@ -11,7 +11,36 @@ a) Link Message Numbers
 	7) IM				= 6
 	8) Items			= 7
 	
+	
+	Core to Config
+	> Request settings
+	
+	Core to Join
+	> Enable/Disable joining
+	
+	Core to Debit
+	> Refunds
+	> Payout
+	> Show/Hide price
+	
+	Config to Core
+	> Data
+	
+	Config to Board
+	> Time data
+	
+	Config to Debit/Join
+	> Freeplay, Pay Price
+	
+	Join to Debit
+	> Refunds
+	
+	Join to Core
+	> Tell who is attempting to join
+	
+	Debit to Join
+	> No perms
+
 
 b) Channels
 	1) Global Server Messages	= -9454200
-	

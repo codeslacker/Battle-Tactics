@@ -14,7 +14,7 @@ e) Refineries
 	3) Money interval
 f) Factories
 	1) Max number of factories
-g) Time
+g) Time (repesented in minutes)
 	1) Time limit
 	2) Capture time until win
 	3) Join time out (amount of time to wait for players to be ready, start the game without them)
