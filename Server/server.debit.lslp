@@ -81,6 +81,7 @@ default
 		else
 		{
 			g_havePerms = FALSE;
+			llOwnerSay("[ERROR] - Debit permissions must be granted. If you do not wish to grant them please set Freeplay to ON.");
 			llMessageLinked(LINK_THIS, g_LMNUM_JOIN, "noperms", "");		// tell the core script that this script doesn't have debit permissions
 			llRequestPermissions(g_OWNER, PERMISSION_DEBIT);
 		}
@@ -102,10 +103,10 @@ default
 		{
 			if (msg == "debit_join")
 			{
-				list parsed = llParseString2List(msg, [";"], []);
+				list parsed = llParseString2List(id, [";"], []);
 				g_configFreeplay = (integer)llList2String(parsed, 0);
 				g_configPrice = (integer)llList2String(parsed, 1);
-				
+								
 				// if freeplay is off, request permissions
 				if (!g_configFreeplay)
 				{

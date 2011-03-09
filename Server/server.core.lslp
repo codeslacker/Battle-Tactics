@@ -42,17 +42,22 @@ integer g_LMNUM_IM = 6;						// instant message messages
 integer g_LMNUM_ITEMS = 7;					// item giver messages
 
 // channel numbers
-integer g_CHANNEL_GLOBAL = -9454200;		// global server messages (such as "kill" or "start" messages)
+integer g_CHANNEL_GLOBAL = -9454200;		// global messages (such as "kill" or "start")
 integer g_CHANNEL_ADMIN = -9454201;			// admin menu messages
+integer g_CHANNEL_PLAYERS = -9454202;		// channel to communicate to the player objects
+integer g_CHANNEL_HUD = -9454203;			// channel for the HUD
 
 // team numbers
 integer g_TEAM_RED = 0;
 integer g_TEAM_BLUE = 1;
 
+float g_COUNTDOWN_SECONDS = 10.0;			// seconds to countdown for a game
+
 // inventory names
-string g_HUD_NAME = "Battle Tactics Hud v1";
-string g_NC_HELP = "Battle Tactics Help";
-string g_NC_CLASSDATA = "BT Class Data";
+string g_INV_HUD = "Battle Tactics Hud v1";
+string g_INV_HELP = "Battle Tactics Help";
+string g_INV_CLASSDATA = "BT Class Data";
+string g_INV_PLAYER = "bt.player";
 
 key g_OWNER;								// the owner's UUID
 
@@ -81,7 +86,14 @@ integer g_pot = 0;				// amount of money in the pot
 
 // listen handles
 integer g_lhAdmin;				// admin channel
+integer g_lhHUD;				// HUD channel (only used for "ready" message)
 
+// variables used for when rezzing Player objects
+integer g_playerCounter;					// number corresponding to a player in one of the lists
+integer g_playerTeam = g_TEAM_RED;			// the team currently being rezzed
+vector g_playerPos;						// position to rez the player object
+integer g_numOfRed;						// reduces llGetListLength calls
+integer g_numOfBlue;
 
 // these two lists are parallel
 list g_redPlayers = [];			// list of red player keys
@@ -101,11 +113,15 @@ list g_blueNames = [];
 // Sets up the server
 Setup()
 {
-	if (g_OWNER == "")
-	{
-		g_OWNER = llGetOwner();
-		g_lhAdmin = llListen(g_CHANNEL_ADMIN, "", g_OWNER, "");		// setup listener for admin commands
-	}
+	g_OWNER = llGetOwner();
+		
+	// remove previous listeners
+	llListenRemove(g_lhAdmin);
+	llListenRemove(g_lhHUD);
+	
+	// set up listeners
+	g_lhAdmin = llListen(g_CHANNEL_ADMIN, "", g_OWNER, "");		// setup listener for admin commands
+	g_lhHUD = llListen(g_CHANNEL_HUD, g_INV_HUD, NULL_KEY, "");
 	
 	llSleep(0.5);		// let the configuration script load first
 	
@@ -113,8 +129,10 @@ Setup()
 	
 	llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "hide");		// hide the price
 	llMessageLinked(LINK_THIS, g_LMNUM_JOIN, "join", "no");			// tell the join scripts that joining is not allowed
+	llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "clear_text", "");	// clear the text above the join buttons
 	llMessageLinked(LINK_THIS, g_LMNUM_CONFIG, "request", "");		// request configuration data
 }
+
 
 
 // Adds a player to a team (if they aren't already on another)
@@ -166,6 +184,7 @@ AddPlayer(key id, integer team)
 }
 
 
+
 // Removes a player from the game
 RemovePlayer(key id)
 {
@@ -178,8 +197,8 @@ RemovePlayer(key id)
 		g_redReady = llDeleteSubList(g_redReady, index, index);
 		g_redNames = llDeleteSubList(g_redNames, index, index);
 		UpdateText(g_TEAM_RED);
-		llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "refund", id);	// refund the player
 		
+		llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "refund", id);	// refund the player
 		return;
 	}
 	
@@ -192,6 +211,7 @@ RemovePlayer(key id)
 		g_blueReady = llDeleteSubList(g_blueReady, index, index);
 		g_blueNames = llDeleteSubList(g_blueNames, index, index);
 		UpdateText(g_TEAM_BLUE);
+		
 		llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "refund", id);	// refund the player
 	}
 	
@@ -221,6 +241,7 @@ PlayerReady(key id)
 	}
 	
 }
+
 
 
 // Checks if all players are ready, if so start the game
@@ -299,6 +320,15 @@ StartGame()
 {
 	llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "join", "no");
 	llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "hide");
+	
+	rotation rot = llGetRot();
+	g_playerPos = llGetPos() + (llRot2Fwd(rot) * 3);
+	g_numOfRed = llGetListLength(g_redPlayers);
+	g_numOfBlue = llGetListLength(g_bluePlayers);
+	g_playerTeam = g_TEAM_RED;
+	
+	llRezObject(g_INV_PLAYER, g_playerPos, ZERO_VECTOR, ZERO_ROTATION, 1);
+	// the rest will be done in the object_rez event
 }
 
 
@@ -312,6 +342,10 @@ EndGame(integer winning_team)
 	{
 		Payout(winning_team);
 	}
+	
+	llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "clear_text", "");		// clear the text above the join buttons
+	llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "join", "yes");
+	llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "show");
 }
 
 
@@ -463,17 +497,17 @@ default
 			
 			else if (msg == "gethud")
 			{
-				llMessageLinked(LINK_THIS, g_LMNUM_ITEMS, g_HUD_NAME, id);
+				llMessageLinked(LINK_THIS, g_LMNUM_ITEMS, g_INV_HUD, id);
 			}
 			
 			else if (msg == "classdata")
 			{
-				llMessageLinked(LINK_THIS, g_LMNUM_ITEMS, g_NC_CLASSDATA, id);
+				llMessageLinked(LINK_THIS, g_LMNUM_ITEMS, g_INV_CLASSDATA, id);
 			}
 			
 			else if (msg == "help")
 			{
-				llMessageLinked(LINK_THIS, g_LMNUM_ITEMS, g_NC_HELP, id);
+				llMessageLinked(LINK_THIS, g_LMNUM_ITEMS, g_INV_HELP, id);
 			}
 			
 			else if (msg == "quit")
@@ -482,6 +516,54 @@ default
 			}
 		}
 		
+	}
+	
+	
+	object_rez(key id)
+	{
+		// rez a Player object, get the UUID of a player on either team, relay to the Player object which UUID to associate it with
+		key player;
+		
+		if (g_playerTeam == g_TEAM_RED)
+		{
+			player = llList2Key(g_redPlayers, g_playerCounter);
+		}
+		else
+		{
+			player = llList2Key(g_bluePlayers, g_playerCounter);
+		}
+		
+		// the first part of the string is the Player object's UUID (in case it somehow goes out of order :S)
+		string data = (string)id + ";" + (string)player + (string)g_playerTeam;
+		
+		llSay(g_CHANNEL_PLAYERS, data);
+		
+		g_playerCounter++;
+		
+		// check if there are no more players on a team
+		if (g_playerTeam == g_TEAM_RED)
+		{
+			if (g_playerCounter == g_numOfRed-1)
+			{
+				g_playerCounter = 0;
+				g_playerTeam = g_TEAM_BLUE;
+			}
+		}
+		else
+		{
+			if (g_playerCounter == g_numOfBlue-1)
+			{
+				g_playerCounter = 0;
+				
+				llRegionSay(g_CHANNEL_HUD, "countdown " + (string)g_COUNTDOWN_SECONDS);
+				llSleep(g_COUNTDOWN_SECONDS);
+				llRegionSay(g_CHANNEL_PLAYERS, "start");
+				
+				return;		// exit event
+			}
+		}
+		
+		llRezObject(g_INV_PLAYER, g_playerPos, ZERO_VECTOR, ZERO_ROTATION, 1);
 	}
 	
 }

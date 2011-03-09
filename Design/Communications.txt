@@ -17,6 +17,8 @@ a) Link Message Numbers
 	
 	Core to Join
 	> Enable/Disable joining
+	> Update Text
+	> Clear text
 	
 	Core to Debit
 	> Refunds
@@ -50,5 +52,6 @@ a) Link Message Numbers
 
 
 b) Channels
-	1) Global Server Messages	= -9454200
+	1) Global Messages			= -9454200
 	2) Admin Messages			= -9454201
+	3) Player Messages			= -9454202

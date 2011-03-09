@@ -62,8 +62,8 @@ default
 	{
 		llResetScript();
 	}
-	
-	
+
+
 	link_message(integer link_num, integer num, string msg, key id)
 	{
 		// global server message
@@ -141,6 +141,12 @@ default
 				llSetText(id, g_TEXT_COLOR, 1.0);
 			}
 			
+			// clear text
+			else if (msg == "clear_text")
+			{
+				llSetText("", g_TEXT_COLOR, 1.0);
+			}
+			
 		}	// end messages to this script
 		
 		
@@ -184,5 +190,26 @@ default
 		
 		// everything is fine
 		llMessageLinked(LINK_ROOT, g_LMNUM_JOIN, "add_red", id);
+	}
+	
+	
+	
+	touch_start(integer n)
+	{
+		key id = llDetectedKey(0);
+		
+		// joining is not allowed
+		if (!g_canJoin)
+		{
+			llMessageLinked(LINK_ROOT, g_LMNUM_IM, "Joining is not allowed at the moment.", id);
+			return;
+		}
+		
+		// freeplay is on
+		if (g_configFreeplay)
+		{
+			llMessageLinked(LINK_ROOT, g_LMNUM_JOIN, "add_red", id);
+		}
+		
 	}
 }
