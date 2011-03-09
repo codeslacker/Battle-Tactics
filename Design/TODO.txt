@@ -1,7 +1,24 @@
 TODO LIST
 =============================================
 
-1) Define communications
-2) Define configuration settings
+Server
+-------------------------------------
+1) Define communications *
+2) Define configuration settings *
 3) Write code
+	a) Config code *
+	b) Player add/remove system
 4) Debug
+-------------------------------------
+
+
+Classes
+-------------------------------------
+Everything
+-------------------------------------
+
+
+HUD
+-------------------------------------
+Everything
+-------------------------------------

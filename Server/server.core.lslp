@@ -44,6 +44,9 @@ integer g_LMNUM_ITEMS = 7;					// item giver messages
 // channel numbers
 integer g_CHANNEL_GLOBAL = -9454200;		// global server messages (such as "kill" or "start" messages)
 
+// team numbers
+integer g_TEAM_RED = 0;
+integer g_TEAM_BLUE = 1;
 
 
 
@@ -95,6 +98,85 @@ Setup()
 }
 
 
+// AddPlayer()	- Adds a player to a team (if they aren't already on another)
+AddPlayer(key id, integer team)
+{
+	// check if they're on a team
+	if (llListFindList(g_redPlayers, [id]) > -1)
+	{
+		llMessageLinked(LINK_THIS, g_LMNUM_IM, "You are already on red!", id);
+		return;
+	}
+	
+	if (llListFindList(g_bluePlayers, [id]) > -1)
+	{
+		llMessageLinked(LINK_THIS, g_LMNUM_IM, "You are already on blue!", id);
+		return;
+	}
+	
+	// they're not on a team
+	if (team == g_TEAM_RED)
+	{
+		g_redPlayers += [id];
+		g_redReady += [FALSE];
+		g_redNames += [llKey2Name(id)];
+	}
+	
+	else if (team == g_TEAM_BLUE)
+	{
+		g_bluePlayers += [id];
+		g_blueReady += [FALSE];
+		g_blueNames += [llKey2Name(id)];
+	}
+	
+}
+
+
+
+// PlayerReady()	- Makes a player ready
+PlayerReady(key id)
+{
+	integer index = llListFindList(g_redPlayers, [id]);
+	if (index > -1)
+	{
+		g_redReady = llListReplaceList(g_redReady, [TRUE], index, index);
+		CheckReady();
+		return;
+	}
+	
+	index = llListFindList(g_redPlayers, [id]);
+	if (index > -1)
+	{
+		g_redReady = llListReplaceList(g_redReady, [TRUE], index, index);
+		CheckReady();
+		return;
+	}
+	
+}
+
+
+// CheckReady()		- Checks if all players are ready, if so start the game
+CheckReady()
+{
+	integer num_of_players = llGetListLength(g_redPlayers) + llGetListLength(g_bluePlayers);
+	integer sum = llRound(llListStatistics(LIST_STAT_SUM, g_redReady) + llListStatistics(LIST_STAT_SUM, g_blueReady));
+	
+	// all players are ready
+	if (sum == num_of_players)
+	{
+		StartGame();
+	}
+}
+
+
+// StartGame()		- Starts a new game
+StartGame()
+{
+	llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "join", "no");
+	llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "hide");
+}
+
+
 
 default
 {
@@ -128,6 +210,17 @@ default
 		// join message
 		else if (num == g_LMNUM_JOIN)
 		{
+			// add to red team
+			if (msg == "add_red")
+			{
+				
+			}
+			
+			// add to blue team
+			else if (msg == "add_blue")
+			{
+				
+			}
 			
 		}	// end of join message
 		
