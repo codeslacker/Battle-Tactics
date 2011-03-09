@@ -55,7 +55,6 @@ integer g_TEAM_BLUE = 1;
 // <configuration section>
 // payout options
 integer g_configPayout 		= FALSE;				// pay out to winners
-integer g_configPayoutAll 	= TRUE;					// pay out to ALL winners (if the pot can't be divided evenly)
 integer g_configInitialPot 	= 0;					// initial pot to start each game with
 
 // refinery options
@@ -71,7 +70,6 @@ float g_configTimeOutJoin	= 4.0;					// join time out
 
 // pot variables
 integer g_pot = 0;				// amount of money in the pot
-integer g_potDivided = 0;		// amount of money to pay each individual
 
 
 // these two lists are parallel
@@ -129,6 +127,16 @@ AddPlayer(key id, integer team)
 		g_blueNames += [llKey2Name(id)];
 	}
 	
+	
+	UpdateText(team);
+	
+}
+
+
+// RemovePlayer()	- Removes a player from the game
+RemovePlayer(key id)
+{
+	
 }
 
 
@@ -140,6 +148,7 @@ PlayerReady(key id)
 	if (index > -1)
 	{
 		g_redReady = llListReplaceList(g_redReady, [TRUE], index, index);
+		UpdateText(g_TEAM_RED);
 		CheckReady();
 		return;
 	}
@@ -148,6 +157,7 @@ PlayerReady(key id)
 	if (index > -1)
 	{
 		g_redReady = llListReplaceList(g_redReady, [TRUE], index, index);
+		UpdateText(g_TEAM_BLUE);
 		CheckReady();
 		return;
 	}
@@ -169,11 +179,125 @@ CheckReady()
 }
 
 
+
+// UpdateText()		- Updates the llSetText of the team join scripts
+UpdateText(integer team)
+{
+	string text;
+	
+	if (team == g_TEAM_RED)
+	{
+		integer num_of_red = llGetListLength(g_redPlayers);
+		
+		integer i;
+		for (i=0; i<num_of_red; i++)
+		{
+			// ready
+			if (llList2Integer(g_redReady, i))
+			{
+				text += "[+] ";
+			}
+			// not ready
+			else
+			{
+				text += "[-] ";
+			}
+			
+			text += llList2String(g_redPlayers, i) + "\n";
+		}
+		
+		llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "red_text", text);
+	}
+	
+	else
+	{
+		integer num_of_blue = llGetListLength(g_bluePlayers);
+		
+		integer i;
+		for (i=0; i<num_of_blue; i++)
+		{
+			// ready
+			if (llList2Integer(g_blueReady, i))
+			{
+				text += "[+] ";
+			}
+			// not ready
+			else
+			{
+				text += "[-] ";
+			}
+			
+			text += llList2String(g_bluePlayers, i) + "\n";
+		}
+		
+		llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "blue_text", text);
+	}
+	
+}
+
+
 // StartGame()		- Starts a new game
 StartGame()
 {
 	llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "join", "no");
 	llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "hide");
+}
+
+
+// Payout()		- Pays out to winners
+Payout(integer team)
+{
+	// red team
+	if (team == g_TEAM_RED)
+	{
+		integer num_of_red = llGetListLength(g_redPlayers);
+		integer pot_divided;
+		
+		// pot divides evenly amongst players
+		if ((g_pot % num_of_red) == 0)
+		{
+			pot_divided = g_pot / num_of_red;
+		}
+		// not evenly
+		else
+		{
+			pot_divided = llFloor(g_pot / num_of_red);
+		}
+		
+		integer i;
+		for (i=0; i<num_of_red; i++)
+		{
+			llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, (string)pot_divided, llList2Key(g_redPlayers, i));
+		}
+		
+	}
+	
+	// blue team
+	else
+	{
+		integer num_of_blue = llGetListLength(g_bluePlayers);
+		integer pot_divided;
+		
+		// pot divides evenly amongst players
+		if ((g_pot % num_of_blue) == 0)
+		{
+			pot_divided = g_pot / num_of_blue;
+		}
+		// not evenly
+		else
+		{
+			pot_divided = llFloor(g_pot / num_of_blue);
+		}
+		
+		integer i;
+		for (i=0; i<num_of_blue; i++)
+		{
+			llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, (string)pot_divided, llList2Key(g_bluePlayers, i));
+		}
+		
+	}
+
+
 }
 
 

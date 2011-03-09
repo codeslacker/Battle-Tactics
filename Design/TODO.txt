@@ -7,7 +7,7 @@ Server
 2) Define configuration settings *
 3) Write code
 	a) Config code *
-	b) Player add/remove system
+	b) Remove player system
 4) Debug
 -------------------------------------
 

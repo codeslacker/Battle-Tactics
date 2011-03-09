@@ -136,7 +136,7 @@ default
 			}
 			
 			// update text message
-			else if (msg == "update_text")
+			else if (msg == "red_text")
 			{
 				llSetText(id, g_TEXT_COLOR, 1.0);
 			}
