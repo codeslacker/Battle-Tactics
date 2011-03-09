@@ -6,8 +6,7 @@ Server
 1) Define communications *
 2) Define configuration settings *
 3) Write code
-	a) Config code *
-	b) Remove player system
+	a) Start game
 4) Debug
 -------------------------------------
 

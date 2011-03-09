@@ -126,7 +126,27 @@ default
 				}
 			}
 			
-			// message to give refunds or pay out (join or core)
+			// refund the join price
+			else if (msg == "refund")
+			{
+				// if freeplay is on
+				if (g_configFreeplay)
+				{
+					return;		// exit event
+				}
+				
+				// no permissions
+				if (!g_havePerms)
+				{
+					llMessageLinked(LINK_THIS, g_LMNUM_IM, "The server doesn't have permission to give refunds. Please contact the owner!", id);
+					return;
+				}
+				
+				llGiveMoney(id, g_configPrice);
+				
+			}
+			
+			// message to give refunds that aren't the price to join, or to pay out (join or core)
 			else
 			{
 				// have permission to give money

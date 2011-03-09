@@ -43,10 +43,13 @@ integer g_LMNUM_ITEMS = 7;					// item giver messages
 
 // channel numbers
 integer g_CHANNEL_GLOBAL = -9454200;		// global server messages (such as "kill" or "start" messages)
+integer g_CHANNEL_ADMIN = -9454201;			// admin menu messages
 
 // team numbers
 integer g_TEAM_RED = 0;
 integer g_TEAM_BLUE = 1;
+
+key g_OWNER;								// the owner's UUID
 
 
 
@@ -63,13 +66,16 @@ integer g_configRefAmount	= 4;					// amount of money to give each person per re
 float g_configRefInterval	= 1.0;					// interval to give money
 
 // time options (represented in minutes)
-float g_configTimeOutJoin	= 4.0;					// join time out
+float g_configTimeoutJoin	= 4.0;					// join time out
 // </configuration section>
 
 
 
 // pot variables
 integer g_pot = 0;				// amount of money in the pot
+
+// listen handles
+integer g_lhAdmin;				// admin channel
 
 
 // these two lists are parallel
@@ -90,6 +96,12 @@ list g_blueNames = [];
 // Setup()	- Sets up the server
 Setup()
 {
+	if (g_OWNER == "")
+	{
+		g_OWNER = llGetOwner();
+		g_lhAdmin = llListen(g_CHANNEL_ADMIN, "", g_OWNER, "");		// setup listener for admin commands
+	}
+	
 	llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "hide");		// hide the price
 	llMessageLinked(LINK_THIS, g_LMNUM_JOIN, "join", "no");			// tell the join scripts that joining is not allowed
 	llMessageLinked(LINK_THIS, g_LMNUM_CONFIG, "request", "");		// request configuration data
@@ -99,16 +111,18 @@ Setup()
 // AddPlayer()	- Adds a player to a team (if they aren't already on another)
 AddPlayer(key id, integer team)
 {
-	// check if they're on a team
+		// check if they're on a team
 	if (llListFindList(g_redPlayers, [id]) > -1)
 	{
 		llMessageLinked(LINK_THIS, g_LMNUM_IM, "You are already on red!", id);
+		llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "refund", id);		// refund (let the debit script check if freeplay is on)
 		return;
 	}
 	
 	if (llListFindList(g_bluePlayers, [id]) > -1)
 	{
 		llMessageLinked(LINK_THIS, g_LMNUM_IM, "You are already on blue!", id);
+		llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "refund", id);		// refund (let the debit script check if freeplay is on)
 		return;
 	}
 	
@@ -126,9 +140,19 @@ AddPlayer(key id, integer team)
 		g_blueReady += [FALSE];
 		g_blueNames += [llKey2Name(id)];
 	}
-	
-	
+		
 	UpdateText(team);
+	
+	// create a join timeout if there is at least one person on each team
+	if (g_configTimeoutJoin > 0.0)
+	{
+		if (llGetListLength(g_redPlayers) > 0 && llGetListLength(g_bluePlayers) > 0)
+		{
+			float seconds = g_configTimeoutJoin * 60.0;		// convert minutes to seconds
+			llSetTimerEvent(seconds);
+			llSay(0, "Waiting for new players, session will timeout in " + (string)g_configTimeoutJoin + " minutes...");
+		}
+	}
 	
 }
 
@@ -136,6 +160,31 @@ AddPlayer(key id, integer team)
 // RemovePlayer()	- Removes a player from the game
 RemovePlayer(key id)
 {
+	// red team
+	integer index = llListFindList(g_redPlayers, [id]);
+	
+	if (index > -1)
+	{
+		g_redPlayers = llDeleteSubList(g_redPlayers, index, index);
+		g_redReady = llDeleteSubList(g_redReady, index, index);
+		g_redNames = llDeleteSubList(g_redNames, index, index);
+		UpdateText(g_TEAM_RED);
+		llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "refund", id);	// refund the player
+		
+		return;
+	}
+	
+	// blue team
+	index = llListFindList(g_bluePlayers, [id]);
+	
+	if (index > -1)
+	{
+		g_bluePlayers = llDeleteSubList(g_bluePlayers, index, index);
+		g_blueReady = llDeleteSubList(g_blueReady, index, index);
+		g_blueNames = llDeleteSubList(g_blueNames, index, index);
+		UpdateText(g_TEAM_BLUE);
+		llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "refund", id);	// refund the player
+	}
 	
 }
 
@@ -187,7 +236,7 @@ UpdateText(integer team)
 	
 	if (team == g_TEAM_RED)
 	{
-		integer num_of_red = llGetListLength(g_redPlayers);
+		integer num_of_red = llGetListLength(g_redNames);
 		
 		integer i;
 		for (i=0; i<num_of_red; i++)
@@ -203,7 +252,7 @@ UpdateText(integer team)
 				text += "[-] ";
 			}
 			
-			text += llList2String(g_redPlayers, i) + "\n";
+			text += llList2String(g_redNames, i) + "\n";
 		}
 		
 		llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "red_text", text);
@@ -211,7 +260,7 @@ UpdateText(integer team)
 	
 	else
 	{
-		integer num_of_blue = llGetListLength(g_bluePlayers);
+		integer num_of_blue = llGetListLength(g_blueNames);
 		
 		integer i;
 		for (i=0; i<num_of_blue; i++)
@@ -227,7 +276,7 @@ UpdateText(integer team)
 				text += "[-] ";
 			}
 			
-			text += llList2String(g_bluePlayers, i) + "\n";
+			text += llList2String(g_blueNames, i) + "\n";
 		}
 		
 		llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "blue_text", text);
@@ -241,6 +290,18 @@ StartGame()
 {
 	llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "join", "no");
 	llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "hide");
+}
+
+
+// EndGame()		- Ends the game
+EndGame(integer winning_team)
+{
+	llRegionSay(g_CHANNEL_GLOBAL, "kill");		// global kill message
+	
+	if (g_configPayout)
+	{
+		Payout(winning_team);
+	}
 }
 
 
@@ -317,6 +378,21 @@ default
 	
 	listen(integer channel, string name, key id, string msg)
 	{
+		if (channel == g_CHANNEL_ADMIN)
+		{
+			msg = llToLower(msg);		// convert to lowercase for easier comparison
+			
+			if (msg == "reset")
+			{
+				llMessageLinked(LINK_SET, g_LMNUM_GLOBAL, "reset", "");
+				llResetScript();
+			}
+			
+			else if (msg == "reload cfg")
+			{
+				Setup();
+			}
+		}
 		
 	}
 	
@@ -337,17 +413,46 @@ default
 			// add to red team
 			if (msg == "add_red")
 			{
-				
+				AddPlayer(id, g_TEAM_RED);
 			}
 			
 			// add to blue team
 			else if (msg == "add_blue")
 			{
-				
+				AddPlayer(id, g_TEAM_BLUE);
 			}
 			
 		}	// end of join message
 		
+		
+		// menu message
+		else if (num == g_LMNUM_MENU)
+		{
+			if (msg == "admin")
+			{
+				
+			}
+			
+			else if (msg == "gethud")
+			{
+				
+			}
+			
+			else if (msg == "classdata")
+			{
+				
+			}
+			
+			else if (msg == "help")
+			{
+				
+			}
+			
+			else if (msg == "quit")
+			{
+				
+			}
+		}
 		
 	}
 	
