@@ -49,6 +49,11 @@ integer g_CHANNEL_ADMIN = -9454201;			// admin menu messages
 integer g_TEAM_RED = 0;
 integer g_TEAM_BLUE = 1;
 
+// inventory names
+string g_HUD_NAME = "Battle Tactics Hud v1";
+string g_NC_HELP = "Battle Tactics Help";
+string g_NC_CLASSDATA = "BT Class Data";
+
 key g_OWNER;								// the owner's UUID
 
 
@@ -93,7 +98,7 @@ list g_blueNames = [];
 
 
 // FUNCTIONS
-// Setup()	- Sets up the server
+// Sets up the server
 Setup()
 {
 	if (g_OWNER == "")
@@ -102,13 +107,17 @@ Setup()
 		g_lhAdmin = llListen(g_CHANNEL_ADMIN, "", g_OWNER, "");		// setup listener for admin commands
 	}
 	
+	llSleep(0.5);		// let the configuration script load first
+	
+	llOwnerSay("Requesting configuration settings...");
+	
 	llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "hide");		// hide the price
 	llMessageLinked(LINK_THIS, g_LMNUM_JOIN, "join", "no");			// tell the join scripts that joining is not allowed
 	llMessageLinked(LINK_THIS, g_LMNUM_CONFIG, "request", "");		// request configuration data
 }
 
 
-// AddPlayer()	- Adds a player to a team (if they aren't already on another)
+// Adds a player to a team (if they aren't already on another)
 AddPlayer(key id, integer team)
 {
 		// check if they're on a team
@@ -157,7 +166,7 @@ AddPlayer(key id, integer team)
 }
 
 
-// RemovePlayer()	- Removes a player from the game
+// Removes a player from the game
 RemovePlayer(key id)
 {
 	// red team
@@ -190,7 +199,7 @@ RemovePlayer(key id)
 
 
 
-// PlayerReady()	- Makes a player ready
+// Makes a player ready
 PlayerReady(key id)
 {
 	integer index = llListFindList(g_redPlayers, [id]);
@@ -214,7 +223,7 @@ PlayerReady(key id)
 }
 
 
-// CheckReady()		- Checks if all players are ready, if so start the game
+// Checks if all players are ready, if so start the game
 CheckReady()
 {
 	integer num_of_players = llGetListLength(g_redPlayers) + llGetListLength(g_bluePlayers);
@@ -229,7 +238,7 @@ CheckReady()
 
 
 
-// UpdateText()		- Updates the llSetText of the team join scripts
+// Updates the llSetText of the team join scripts
 UpdateText(integer team)
 {
 	string text;
@@ -285,7 +294,7 @@ UpdateText(integer team)
 }
 
 
-// StartGame()		- Starts a new game
+// Starts a new game
 StartGame()
 {
 	llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "join", "no");
@@ -293,7 +302,8 @@ StartGame()
 }
 
 
-// EndGame()		- Ends the game
+
+// Ends the game
 EndGame(integer winning_team)
 {
 	llRegionSay(g_CHANNEL_GLOBAL, "kill");		// global kill message
@@ -305,7 +315,8 @@ EndGame(integer winning_team)
 }
 
 
-// Payout()		- Pays out to winners
+
+// Pays out to winners
 Payout(integer team)
 {
 	// red team
@@ -402,8 +413,20 @@ default
 		// config message
 		if (num == g_LMNUM_CONFIG && msg == "core")
 		{
+			list parsed = llParseString2List(msg, [";"], []);
 			
-				
+			g_configPayout = (integer)llList2String(parsed, 0);
+			g_configInitialPot = (integer)llList2String(parsed, 1);
+			g_configRefNum = (integer)llList2String(parsed, 2);
+			g_configRefAmount = (integer)llList2String(parsed, 3);
+			g_configRefInterval = (float)llList2String(parsed, 4);
+			g_configTimeoutJoin = (float)llList2String(parsed, 5);
+			
+			llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "show");
+			llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "join", "yes");
+			
+			llOwnerSay("[STATUS] - Configuration complete!");
+										
 		}	// end of config message
 		
 		
@@ -430,27 +453,32 @@ default
 		{
 			if (msg == "admin")
 			{
+				if (id != g_OWNER)
+				{
+					return;
+				}
 				
+				llDialog(g_OWNER, "Admin Menu", ["Reset", "Reload Cfg"], g_CHANNEL_ADMIN);
 			}
 			
 			else if (msg == "gethud")
 			{
-				
+				llMessageLinked(LINK_THIS, g_LMNUM_ITEMS, g_HUD_NAME, id);
 			}
 			
 			else if (msg == "classdata")
 			{
-				
+				llMessageLinked(LINK_THIS, g_LMNUM_ITEMS, g_NC_CLASSDATA, id);
 			}
 			
 			else if (msg == "help")
 			{
-				
+				llMessageLinked(LINK_THIS, g_LMNUM_ITEMS, g_NC_HELP, id);
 			}
 			
 			else if (msg == "quit")
 			{
-				
+				RemovePlayer(id);
 			}
 		}
 		

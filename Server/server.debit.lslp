@@ -62,6 +62,11 @@ default
 		llResetScript();
 	}
 	
+	state_entry()
+	{
+		g_OWNER = llGetOwner();
+	}
+	
 	
 	run_time_permissions(integer perms_granted)
 	{
@@ -83,8 +88,17 @@ default
 	
 	link_message(integer link_num, integer num, string msg, key id)
 	{
+		// global server message
+		if (num == g_LMNUM_GLOBAL)
+		{
+			if (msg == "reset")
+			{
+				llResetScript();
+			}
+		}
+		
 		// configuration message
-		if (num == g_LMNUM_CONFIG)
+		else if (num == g_LMNUM_CONFIG)
 		{
 			if (msg == "debit_join")
 			{

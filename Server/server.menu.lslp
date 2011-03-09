@@ -39,11 +39,11 @@ integer g_PRIM_FACE = 3;			// the face the menu is on
 integer g_NUM_OF_BUTTONS = 5;		// number of buttons on the prim face
 
 // buttons
-integer g_BUTTON_ADMIN = 1;
-integer g_BUTTON_GET_HUD = 2;
-integer g_BUTTON_CLASS_DATA = 3;
-integer g_BUTTON_HELP = 4;
-integer g_BUTTON_QUIT = 5;
+integer g_BUTTON_ADMIN = 0;
+integer g_BUTTON_GET_HUD = 1;
+integer g_BUTTON_CLASS_DATA = 2;
+integer g_BUTTON_HELP = 3;
+integer g_BUTTON_QUIT = 4;
 
 float g_BUTTON_SIZE;			// the size of each button
 vector g_SCALE;

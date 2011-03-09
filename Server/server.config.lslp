@@ -67,7 +67,7 @@ key g_reqID;					// request ID for dataserver
 
 
 // FUNCTIONS
-// RelaySettings()		- Relays the settings to other scripts
+// Relays the settings to other scripts
 RelaySettings()
 {
 	// stuff to be relayed to the core
@@ -94,7 +94,7 @@ RelaySettings()
 }
 
 
-// TrueOrFalse()	- Reads input and determines whether it's true or false
+// Reads input and determines whether it's true or false
 integer TrueOrFalse(string data)
 {
 	if (data == "on" || data == "yes" || data == "true" || data == "1")
@@ -132,6 +132,13 @@ default
 		// configuration message
 		else if (num == g_LMNUM_CONFIG && msg == "request")
 		{
+			if (llGetInventoryType(g_NOTECARD_CONFIG) == -1)
+			{
+				llOwnerSay("[ERROR] - Configuration notecard (" + g_NOTECARD_CONFIG + ") not found.");
+				return;
+			}
+			
+			llOwnerSay("Reading configuration notecard...");
 			g_reqID = llGetNotecardLine(g_NOTECARD_CONFIG, g_currentLine);
 		}
 		
@@ -160,8 +167,7 @@ default
 			g_reqID = llGetNotecardLine(g_NOTECARD_CONFIG, g_currentLine);
 			return;		// exit event
 		}
-		
-		llOwnerSay((string)req_id);
+
 		
 		integer index = llSubStringIndex(data, "=");
 		string setting = llGetSubString(data, 0, index-1);
@@ -169,7 +175,7 @@ default
 		
 		// trim the strings and convert to lowercase for easier comparison
 		setting = llToLower(llStringTrim(setting, STRING_TRIM));
-		value = llToLower(llStringTrim(setting, STRING_TRIM));
+		value = llToLower(llStringTrim(value, STRING_TRIM));
 		
 		if (setting == "config_freeplay")
 		{
@@ -192,11 +198,6 @@ default
 		else if (setting == "config_payout")
 		{
 			g_configPayout = TrueOrFalse(value);			
-		}
-		
-		else if (setting == "config_payout_all")
-		{
-			g_configPayoutAll = TrueOrFalse(value);
 		}
 		
 		else if (setting == "config_initial_pot")
@@ -277,7 +278,7 @@ default
 			
 		}
 		
-		else if (setting == "config_capture_time")
+		else if (setting == "config_time_capture")
 		{
 			g_configTimeCapture = (float)value;
 			
@@ -290,7 +291,7 @@ default
 			
 		}
 		
-		else if (setting == "config_join_timeout")
+		else if (setting == "config_timeout_join")
 		{
 			g_configTimeoutJoin = (float)value;
 			
@@ -302,6 +303,11 @@ default
 			}
 			
 		}
+		
+		
+		// get next line
+		g_currentLine++;
+		g_reqID = llGetNotecardLine(g_NOTECARD_CONFIG, g_currentLine);
 		
 	}	// end of dataserver event
 	
