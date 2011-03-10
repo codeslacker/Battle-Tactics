@@ -52,6 +52,7 @@ integer g_configInitialPot 	= 0;					// initial pot to start each game with
 integer g_configRefNum 		= 2;					// number of refineries per team
 integer g_configRefAmount	= 4;					// amount of money to give each person per refinery on an interval
 float g_configRefInterval	= 1.0;					// interval to give money
+integer g_configInitialMoney = 150;					// initial amount of money each player starts off with
 
 integer g_configMaxFactories = 3;					// maximum number of factories per player
 
@@ -71,12 +72,15 @@ key g_reqID;					// request ID for dataserver
 RelaySettings()
 {
 	// stuff to be relayed to the core
-	string core = (string)g_configPayout + ";" +
+	string core = (string)g_configFreeplay + ";" +
+				  (string)g_configPrice + ";" +
+				  (string)g_configPayout + ";" +
 				  (string)g_configPayoutAll + ";" +
 				  (string)g_configInitialPot + ";" +
 				  (string)g_configRefNum + ";" +
 				  (string)g_configRefAmount + ";" +
 				  (string)g_configRefInterval + ";" +
+				  (string)g_configInitialMoney + ";" +
 				  (string)g_configTimeoutJoin;
 				  
 	// stuff to be relayed to the board
@@ -250,6 +254,11 @@ default
 				llOwnerSay("[WARNING] - Refinery interval cannot be less than 0.005, defaulting to 0.005.");
 			}
 			
+		}
+		
+		else if (setting == "config_initial_money")
+		{
+			g_configInitialMoney = (integer)value;	
 		}
 		
 		else if (setting == "config_max_factories")

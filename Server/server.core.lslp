@@ -66,6 +66,8 @@ key g_OWNER;								// the owner's UUID
 // VARIABLES
 
 // <configuration section>
+integer g_configFreeplay	= TRUE;					// freeplay option (only used for the pot)
+integer g_configPrice		= 1;					// the price to join (only used add for the pot)
 // payout options
 integer g_configPayout 		= FALSE;				// pay out to winners
 integer g_configInitialPot 	= 0;					// initial pot to start each game with
@@ -74,6 +76,7 @@ integer g_configInitialPot 	= 0;					// initial pot to start each game with
 integer g_configRefNum 		= 2;					// number of refineries per team
 integer g_configRefAmount	= 4;					// amount of money to give each person per refinery on an interval
 float g_configRefInterval	= 1.0;					// interval to give money
+integer g_configInitialMoney = 150;					// initial amount of money each player starts off with
 
 // time options (represented in minutes)
 float g_configTimeoutJoin	= 4.0;					// join time out
@@ -89,8 +92,8 @@ integer g_lhAdmin;				// admin channel
 integer g_lhHUD;				// HUD channel (only used for "ready" message)
 
 // variables used for when rezzing Player objects
-integer g_playerCounter;					// number corresponding to a player in one of the lists
-integer g_playerTeam = g_TEAM_RED;			// the team currently being rezzed
+integer g_playerCounter;				// number corresponding to a player in one of the lists
+integer g_playerTeam;					// the team currently being rezzed
 vector g_playerPos;						// position to rez the player object
 integer g_numOfRed;						// reduces llGetListLength calls
 integer g_numOfBlue;
@@ -169,6 +172,7 @@ AddPlayer(key id, integer team)
 	}
 		
 	UpdateText(team);
+	AddPot();
 	
 	// create a join timeout if there is at least one person on each team
 	if (g_configTimeoutJoin > 0.0)
@@ -197,6 +201,7 @@ RemovePlayer(key id)
 		g_redReady = llDeleteSubList(g_redReady, index, index);
 		g_redNames = llDeleteSubList(g_redNames, index, index);
 		UpdateText(g_TEAM_RED);
+		RemovePot();
 		
 		llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "refund", id);	// refund the player
 		return;
@@ -211,8 +216,50 @@ RemovePlayer(key id)
 		g_blueReady = llDeleteSubList(g_blueReady, index, index);
 		g_blueNames = llDeleteSubList(g_blueNames, index, index);
 		UpdateText(g_TEAM_BLUE);
+		RemovePot();
 		
 		llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "refund", id);	// refund the player
+	}
+	
+}
+
+
+
+// Remove all players from the game (refunds if applicable)
+RemoveAllPlayers()
+{
+	// freeplay
+	if (g_configFreeplay)
+	{
+		// clear the lists
+		g_redPlayers = [];
+		g_redReady = [];
+		g_redNames = [];
+		
+		g_bluePlayers = [];
+		g_blueReady = [];
+		g_blueNames = [];
+		
+		g_pot = g_configInitialPot;
+		
+		llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "clear_text", "");		// clear display text
+	}
+	
+	// not freeplay
+	else
+	{
+		integer num_of_red = llGetListLength(g_redPlayers);
+		integer i;
+		for (i=0; i<num_of_red; i++)
+		{
+			RemovePlayer(llList2Key(g_redPlayers, 0));
+		}
+		
+		integer num_of_blue = llGetListLength(g_bluePlayers);	
+		for (i=0; i<num_of_blue; i++)
+		{
+			RemovePlayer(llList2Key(g_bluePlayers, 0));
+		}
 	}
 	
 }
@@ -408,6 +455,28 @@ Payout(integer team)
 
 
 
+// Adds to the pot
+AddPot()
+{
+	if (!g_configFreeplay && g_configPayout)
+	{
+		g_pot += g_configPrice;
+	}
+}
+
+
+// Removes from the pot
+RemovePot()
+{
+	if (!g_configFreeplay && g_configPayout)
+	{
+		g_pot -= g_configPrice;
+	}
+}
+
+
+
+
 default
 {
 	on_rez(integer param)
@@ -448,13 +517,16 @@ default
 		if (num == g_LMNUM_CONFIG && msg == "core")
 		{
 			list parsed = llParseString2List(msg, [";"], []);
-			
-			g_configPayout = (integer)llList2String(parsed, 0);
-			g_configInitialPot = (integer)llList2String(parsed, 1);
-			g_configRefNum = (integer)llList2String(parsed, 2);
-			g_configRefAmount = (integer)llList2String(parsed, 3);
-			g_configRefInterval = (float)llList2String(parsed, 4);
-			g_configTimeoutJoin = (float)llList2String(parsed, 5);
+
+			g_configFreeplay 	 = (integer)llList2String(parsed, 0);
+			g_configPrice		 = (integer)llList2String(parsed, 1);
+			g_configPayout 		 = (integer)llList2String(parsed, 2);
+			g_configInitialPot 	 = (integer)llList2String(parsed, 3);
+			g_configRefNum 		 = (integer)llList2String(parsed, 4);
+			g_configRefAmount 	 = (integer)llList2String(parsed, 5);
+			g_configRefInterval  = (float)llList2String(parsed, 6);
+			g_configInitialMoney = (integer)llList2String(parsed, 7);
+			g_configTimeoutJoin  = (float)llList2String(parsed, 8);
 			
 			llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "show");
 			llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "join", "yes");
@@ -519,6 +591,14 @@ default
 	}
 	
 	
+	timer()
+	{
+		llSay(0, "Game session timed out. Please rejoin.");
+		RemoveAllPlayers();
+		llSetTimerEvent(0.0);
+	}
+	
+	
 	object_rez(key id)
 	{
 		// rez a Player object, get the UUID of a player on either team, relay to the Player object which UUID to associate it with
@@ -534,7 +614,13 @@ default
 		}
 		
 		// the first part of the string is the Player object's UUID (in case it somehow goes out of order :S)
-		string data = (string)id + ";" + (string)player + (string)g_playerTeam;
+		string data = (string)id + ";" +
+					  (string)player + ";" +
+					  (string)g_playerTeam + ";" +
+					  (string)g_configRefNum + ";" +
+					  (string)g_configRefAmount + ";" +
+					  (string)g_configRefInterval + ";" +
+					  (string)g_configInitialMoney;
 		
 		llSay(g_CHANNEL_PLAYERS, data);
 		

@@ -1,6 +1,8 @@
 CLASSES
 =============================================
 
+Players
+
 Structures
 	- Factories
 	- Tank Factory
@@ -25,3 +27,4 @@ Vehicles
 							
 Unbuildable
 	- Refineries
+	- Players

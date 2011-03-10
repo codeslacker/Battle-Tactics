@@ -12,6 +12,7 @@ e) Refineries
 	1) Number of refineries
 	2) Money per refinery
 	3) Money interval
+	4) Initial money
 f) Factories
 	1) Max number of factories
 g) Time (repesented in minutes)
