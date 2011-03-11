@@ -133,14 +133,14 @@ Damage(integer attack)
 		return;
 	}
 	
-	UpdateHealthBar();
+	UpdateText();
 }
 
 
-// Updates the health bar above the class
-UpdateHealthBar()
+// Updates the health bar and money text
+UpdateText()
 {
-	string text = "(" + (string)g_health + "%) ";
+	string text = "Money: " + (string)g_money + "\n(" + (string)g_health + "%) ";
 	
 	float red = (100 - g_health) / (float)g_MAX_HEALTH;
 	float green = g_health / (float)g_MAX_HEALTH;
@@ -183,7 +183,10 @@ Activate()
 	
 	// tell move script the player's key, which in turn activates the follow interval
 	llMessageLinked(LINK_THIS, g_LMNUM_PLAYER, "player_key", g_player);
-	UpdateHealthBar();
+	UpdateText();
+	
+	llSetTimerEvent(g_configRefInterval);		// refinery interval
+	
 }
 
 
@@ -262,6 +265,8 @@ Build(string type)
 		{
 			llRezObject("classes.blue." + type, pos, ZERO_VECTOR, ZERO_ROTATION, 1);
 		}
+		
+		g_money -= price;
 	}
 	
 	// not enough money
@@ -306,6 +311,7 @@ Repair(key id)
 	if (CheckMoney(g_PRICE_REPAIR))
 	{
 		llRegionSay(g_CHANNEL_REPAIR, id);
+		g_money -= g_PRICE_REPAIR;
 	}
 	
 	else
@@ -376,6 +382,7 @@ default
 			}
 		}
 		
+		
 		// player HUD is talking
 		else if (channel == g_CHANNEL_HUD && llGetOwnerKey(id) == g_player)
 		{
@@ -398,5 +405,13 @@ default
 		}	// end of player HUD channel
 		
 	}	// end of listen event
+	
+	
+	
+	timer()
+	{
+		g_money += g_configRefAmount * g_configRefNum;
+		UpdateText();
+	}
 	
 }
