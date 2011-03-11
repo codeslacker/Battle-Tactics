@@ -208,7 +208,7 @@ default
 		// freeplay is on
 		if (g_configFreeplay)
 		{
-			llMessageLinked(LINK_ROOT, g_LMNUM_JOIN, "add_red", id);
+			llMessageLinked(LINK_ROOT, g_LMNUM_JOIN, "add_blue", id);
 		}
 		
 	}
