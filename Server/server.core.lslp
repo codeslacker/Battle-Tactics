@@ -72,10 +72,12 @@ integer g_configPrice		= 1;					// the price to join (only used add for the pot)
 integer g_configPayout 		= FALSE;				// pay out to winners
 integer g_configInitialPot 	= 0;					// initial pot to start each game with
 
+integer g_configMaxFactories = 3;					// maximum number of factories allowed
+
 // refinery options
-integer g_configRefNum 		= 2;					// number of refineries per team
-integer g_configRefAmount	= 4;					// amount of money to give each person per refinery on an interval
-float g_configRefInterval	= 1.0;					// interval to give money
+integer g_configRefNum 		 = 2;					// number of refineries per team
+integer g_configRefAmount	 = 4;					// amount of money to give each person per refinery on an interval
+float g_configRefInterval	 = 1.0;					// interval to give money
 integer g_configInitialMoney = 150;					// initial amount of money each player starts off with
 
 // time options (represented in minutes)
@@ -522,11 +524,12 @@ default
 			g_configPrice		 = (integer)llList2String(parsed, 1);
 			g_configPayout 		 = (integer)llList2String(parsed, 2);
 			g_configInitialPot 	 = (integer)llList2String(parsed, 3);
-			g_configRefNum 		 = (integer)llList2String(parsed, 4);
-			g_configRefAmount 	 = (integer)llList2String(parsed, 5);
-			g_configRefInterval  = (float)llList2String(parsed, 6);
-			g_configInitialMoney = (integer)llList2String(parsed, 7);
-			g_configTimeoutJoin  = (float)llList2String(parsed, 8);
+			g_configMaxFactories = (integer)llList2String(parsed, 4);
+			g_configRefNum 		 = (integer)llList2String(parsed, 5);
+			g_configRefAmount 	 = (integer)llList2String(parsed, 6);
+			g_configRefInterval  = (float)llList2String(parsed, 7);
+			g_configInitialMoney = (integer)llList2String(parsed, 8);
+			g_configTimeoutJoin  = (float)llList2String(parsed, 9);
 			
 			llMessageLinked(LINK_THIS, g_LMNUM_DEBIT, "price", "show");
 			llMessageLinked(LINK_ALL_OTHERS, g_LMNUM_JOIN, "join", "yes");
@@ -617,6 +620,7 @@ default
 		string data = (string)id + ";" +
 					  (string)player + ";" +
 					  (string)g_playerTeam + ";" +
+	  				  (string)g_configMaxFactories +
 					  (string)g_configRefNum + ";" +
 					  (string)g_configRefAmount + ";" +
 					  (string)g_configRefInterval + ";" +

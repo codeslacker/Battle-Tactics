@@ -23,6 +23,9 @@ CONFIG_REF_AMOUNT = 5
 # interval for money (in seconds)
 CONFIG_REF_INTERVAL = 1
 
+# initial amount of money each player starts off with
+CONFIG_INITIAL_MONEY = 150
+
 # maximum number of factories per player
 CONFIG_MAX_FACTORIES = 3
 

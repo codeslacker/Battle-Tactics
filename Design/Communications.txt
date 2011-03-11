@@ -10,6 +10,7 @@ a) Link Message Numbers
 	6) Menu				= 5
 	7) IM				= 6
 	8) Items			= 7
+	9) Player			= 8
 	
 	
 	Core to Config
@@ -50,8 +51,26 @@ a) Link Message Numbers
 	Menu to Core
 	> Button pressed
 
+	Player to Move
+	> Relay player key
+
 
 b) Channels
 	1) Global Messages			= -9454200
 	2) Admin Messages			= -9454201
 	3) Player Messages			= -9454202
+	4) Attack Messages			= -9454203
+	5) Repair Messages			= -9454204
+	
+	
+	Server to All
+	> Kill message
+	
+	Server to Player
+	> Relay player key, money interval, max factories, refinery amount, number of refineries, player team
+	
+	Player to Object
+	> Tell object to repair
+	
+	Object to Object
+	> Attack

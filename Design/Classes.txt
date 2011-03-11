@@ -11,7 +11,7 @@ Structures
 		- Bomber planes (anti-structures)
 	- Refineries
 	- Barracks 
-	- Soldiers (only class capable of capturing)
+		- Soldiers (only class capable of capturing)
 	- Sniper Towers 
 		- Sniper (long range anti-soldier)
 				
