@@ -75,8 +75,8 @@ RelaySettings()
 	string core = (string)g_configFreeplay + ";" +
 				  (string)g_configPrice + ";" +
 				  (string)g_configPayout + ";" +
-				  (string)g_configPayoutAll + ";" +
 				  (string)g_configInitialPot + ";" +
+				  (string)g_configMaxFactories + ";" +
 				  (string)g_configRefNum + ";" +
 				  (string)g_configRefAmount + ";" +
 				  (string)g_configRefInterval + ";" +
@@ -304,11 +304,11 @@ default
 		{
 			g_configTimeoutJoin = (float)value;
 			
-			// can't be less than 20 seconds
-			if (g_configTimeoutJoin < 0.20)
+			// can't be less than 0
+			if (g_configTimeoutJoin < 0.0)
 			{
-				g_configTimeoutJoin = 0.20;
-				llOwnerSay("[WARNING] - Join timeout cannot be set to less than 20 seconds, defaulting to 20 seconds.");
+				g_configTimeoutJoin = 0.0;
+				llOwnerSay("[WARNING] - Join timeout cannot be set to less than 0 seconds, defaulting to no timeout.");
 			}
 			
 		}

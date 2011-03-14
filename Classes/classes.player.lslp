@@ -94,6 +94,9 @@ integer g_lhHUD;							// the HUD handle
 
 float g_playerHeight;						// height of the player
 
+// board properties
+vector g_boardPos;							// position of the board (used for build position limiting)
+
 // keys
 key g_player;								// the player's key
 key g_uuid;									// the UUID of this object
@@ -378,6 +381,10 @@ default
 				g_configRefNum 		 = (integer)llList2String(parsed, 4);
 				g_configRefAmount 	 = (integer)llList2String(parsed, 5);
 				g_configRefInterval  = (float)llList2String(parsed, 6);
+				
+				// get the position of the board
+				list obj_details = llGetObjectDetails(id, [OBJECT_POS]);
+				g_boardPos = llList2Vector(obj_details, 0);
 				
 			}
 		}

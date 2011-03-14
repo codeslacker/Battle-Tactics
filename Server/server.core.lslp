@@ -176,15 +176,17 @@ AddPlayer(key id, integer team)
 	UpdateText(team);
 	AddPot();
 	
-	// create a join timeout if there is at least one person on each team
+	// create a join timeout
 	if (g_configTimeoutJoin > 0.0)
 	{
-		if (llGetListLength(g_redPlayers) > 0 && llGetListLength(g_bluePlayers) > 0)
-		{
-			float seconds = g_configTimeoutJoin * 60.0;		// convert minutes to seconds
-			llSetTimerEvent(seconds);
-			llSay(0, "Waiting for new players, session will timeout in " + (string)g_configTimeoutJoin + " minutes...");
-		}
+		float seconds = g_configTimeoutJoin * 60.0;		// convert minutes to seconds
+		
+		// format the timeout setting to only display 2 numbers after the decimal
+		string formatted = (string)g_configTimeoutJoin;
+		formatted = llGetSubString(formatted, 0, llSubStringIndex(formatted, ".")+2);
+		
+		llSetTimerEvent(seconds);
+		llSay(0, "Waiting for new players, session will timeout in " + formatted + " minutes...");
 	}
 	
 }
@@ -518,7 +520,7 @@ default
 		// config message
 		if (num == g_LMNUM_CONFIG && msg == "core")
 		{
-			list parsed = llParseString2List(msg, [";"], []);
+			list parsed = llParseString2List(id, [";"], []);
 
 			g_configFreeplay 	 = (integer)llList2String(parsed, 0);
 			g_configPrice		 = (integer)llList2String(parsed, 1);
